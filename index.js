@@ -8,9 +8,21 @@ app.use(express.json());
 
 /* Get all tutorials */
 app.get('/api/tutorials', (req, res) => {
-  Tutorial.find({}).then((tutorial) => {
-    res.json(tutorial);
-  });
+  const { title } = req.query; // Using 'title' as query string to check if the tutorial's name contains 'kw'.
+  title
+    ? Tutorial.find({ name: { $regex: '.*kw.*' } }).then((filteredTutorials) =>
+        res.json(filteredTutorials)
+      )
+    : Tutorial.find({}).then((tutorial) => {
+        res.json(tutorial);
+      });
+});
+
+/* Get published tutorials */
+app.get('/api/tutorials/published', (req, res) => {
+  Tutorial.find({ published: true }).then((publishedTutorials) =>
+    res.json(publishedTutorials)
+  );
 });
 
 /* Get tutorial by id */
@@ -41,26 +53,30 @@ app.put('/api/tutorials/:id', (req, res) => {
   Tutorial.findByIdAndUpdate(req.params.id, tutorial, { new: true })
     .then((updatedTutorial) => res.json(updatedTutorial))
     .catch((err) => {
-        console.log(err);
-        res.send('An error has occurred...');
+      console.log(err);
+      res.send('An error has occurred...');
     });
 });
 
 /* Remove tutorial by id */
 app.delete('/api/tutorials/:id', (req, res) => {
-    Tutorial.findByIdAndRemove(req.params.id)
-    .then((removedTutorial) => res.status(204).send(`Tutorial: "${removedTutorial}" has been removed`).end())
+  Tutorial.findByIdAndRemove(req.params.id)
+    .then((removedTutorial) =>
+      res
+        .status(204)
+        .send(`Tutorial: '${removedTutorial}' has been removed`)
+        .end()
+    )
     .catch((err) => {
-        console.log(err);
-        res.send('An error has occurred...');
+      console.log(err);
+      res.send('An error has occurred...');
     });
 });
 
 /* Remove all tutorials */
 app.delete('/api/tutorials', (req, res) => {
-    Tutorial.deleteMany({})
-    .then(res.send('Cleared tutorials list'));
-})
+  Tutorial.deleteMany({}).then(res.send('Cleared tutorials list'));
+});
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
